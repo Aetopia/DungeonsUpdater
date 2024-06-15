@@ -57,13 +57,13 @@ Download, install & update Minecraft Dungeons.
 
 - How can I uninstall Minecraft Dungeons & Dungeons Updater?
 
-    - Uninstall via Scoop:
+    - Scoop:
         
         ```
         scoop uninstall dungeonsupdater -p
         ```
     
-    - Downloaded via GitHub Releases:
+    - GitHub Releases:
         - Delete the `DungeonsUpdater.exe` executable and `Content` folder.
 
 ## Building

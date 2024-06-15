@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
@@ -60,7 +62,7 @@ static class Dungeons
         return javaScriptSerializer.Deserialize<dynamic>(await response.Content.ReadAsStringAsync());
     }
 
-    internal static async Task<IList<IArtifact>> GetAsync()
+    internal static async Task<ReadOnlyCollection<IArtifact>> GetAsync()
     {
         await default(SynchronizationContextRemover);
 
@@ -74,6 +76,6 @@ static class Dungeons
         }
         artifacts.Sort((a, b) => ((Artifact)a).Size.CompareTo(((Artifact)b).Size));
 
-        return artifacts;
+        return artifacts.AsReadOnly();
     }
 }
