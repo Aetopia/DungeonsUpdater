@@ -16,7 +16,7 @@ interface IArtifact
     string Url { get; }
 }
 
-file readonly struct Artifact(string file, string sha1, string url, int size) : IArtifact
+file class Artifact(string file, string sha1, string url, int size) : IArtifact
 {
     public string File => file;
 
