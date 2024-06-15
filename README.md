@@ -55,6 +55,17 @@ Download, install & update Minecraft Dungeons.
     - [Refer to this help article on DokuCraft's website.](https://stash.dokucraft.co.uk/?help=modding-dungeons-launcher)
     - The installation directory resides alongside Dungeons Updater with the folder name of `Content`.
 
+- How can I uninstall Minecraft Dungeons & Dungeons Updater?
+
+    - Uninstall via Scoop:
+        
+        ```
+        scoop uninstall dungeonsupdater -p
+        ```
+    
+    - Downloaded via GitHub Releases:
+        - Delete the `DungeonsUpdater.exe` executable and `Content` folder.
+
 ## Building
 1. Download the following:
     - [.NET SDK](https://dotnet.microsoft.com/en-us/download)
