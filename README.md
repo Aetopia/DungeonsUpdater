@@ -52,7 +52,7 @@ Download, install & update Minecraft Dungeons.
         ```
 
 - How can I setup Minecraft Dungeons for modding?
-    - [Refer to this help article on DokuCraft's website.]((https://stash.dokucraft.co.uk/?help=modding-dungeons-launcher))
+    - [Refer to this help article on DokuCraft's website.](https://stash.dokucraft.co.uk/?help=modding-dungeons-launcher)
     - The installation directory resides alongside Dungeons Updater with the folder name of `Content`.
 
 ## Building
