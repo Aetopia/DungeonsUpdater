@@ -1,8 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 class MainForm : Form
@@ -10,10 +14,6 @@ class MainForm : Form
     [DllImport("Shell32", CharSet = CharSet.Auto, SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     static extern int ShellMessageBox(IntPtr hAppInst = default, IntPtr hWnd = default, string lpcText = default, string lpcTitle = "Error", int fuStyle = 0x00000010);
-
-    [DllImport("Wininet")]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    static extern bool InternetGetConnectedState(int lpdwFlags = 0, int dwReserved = 0);
 
     internal MainForm()
     {
@@ -54,7 +54,7 @@ class MainForm : Form
 
         Label label2 = new()
         {
-            Text = "Checking...",
+            Text = "Verifying...",
             AutoSize = true,
             Location = new(label1.Location.X, LogicalToDeviceUnits(80)),
             Margin = default
@@ -86,27 +86,47 @@ class MainForm : Form
 
         Shown += async (sender, e) =>
         {
-            if (InternetGetConnectedState())
-            {
-                var files = await Product.GetFilesAsync();
-                if (files.Any())
-                {
-                    progressBar.Style = ProgressBarStyle.Blocks;
-                    label2.Text = "Downloading...";
+            var artifacts = await Dungeons.GetAsync();
+            IList<IArtifact> files = [];
 
-                    var count = files.Count();
-                    for (int i = 0; i < count; i++)
+            if (artifacts.Count != 0)
+            {
+                progressBar.Style = ProgressBarStyle.Blocks;
+                progressBar.Maximum = artifacts.Count;
+                await Task.Run(() =>
+                {
+                    using SHA1 sha1 = SHA1.Create();
+                    for (int i = 0; i < artifacts.Count; i++)
                     {
-                        var file = files.ElementAt(i);
-                        label1.Text = $"Updating Minecraft Dungeons... ({i + 1} of {count})";
-                        await webClient.DownloadFileTaskAsync(file.Url, file.Path);
+                        label1.Text = $"Updating Minecraft Dungeons... ({progressBar.Value = i + 1} of {artifacts.Count})";
+                        if (File.Exists(artifacts[i].File))
+                        {
+                            using var inputStream = File.OpenRead(artifacts[i].File);
+                            if (artifacts[i].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
+                                continue;
+                        }
+                        files.Add(artifacts[i]);
                     }
+                });
+            }
+
+            if (files.Count != 0)
+            {
+                progressBar.Style = ProgressBarStyle.Blocks;
+                progressBar.Value = 0;
+                progressBar.Maximum = 100;
+                label2.Text = "Downloading...";
+
+                for (int i = 0; i < files.Count; i++)
+                {
+                    label1.Text = $"Updating Minecraft Dungeons... ({i + 1} of {files.Count})";
+                    Directory.CreateDirectory(Path.GetDirectoryName(files[i].File));
+                    await webClient.DownloadFileTaskAsync(files[i].Url, files[i].File);
                 }
             }
 
             Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
             Close();
         };
-
     }
 }
