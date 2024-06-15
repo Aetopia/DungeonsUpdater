@@ -34,7 +34,7 @@ Download, install & update Minecraft Dungeons.
 
 - How can I repair Minecraft Dungeons?
     - Dungeons Updater automatically verifies & repairs the installation as needed.
-    - This doesn't affect any modifications that have been installed.
+    - This doesn't affect any installed modifications.
 
 - How can I skip the startup movies?
     - Open the following file:
