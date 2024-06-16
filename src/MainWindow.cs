@@ -39,10 +39,6 @@ file static class Resources
 
 class MainWindow : Window
 {
-    [DllImport("Kernel32", CharSet = CharSet.Auto, SetLastError = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    static extern bool DeleteFile(string lpFileName);
-
     [DllImport("Shell32", CharSet = CharSet.Auto, SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     static extern int ShellMessageBox(IntPtr hAppInst = default, IntPtr hWnd = default, string lpcText = default, string lpcTitle = "Error", int fuStyle = 0x00000010);
