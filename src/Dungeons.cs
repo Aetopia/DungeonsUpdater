@@ -1,12 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Net.Http;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web.Script.Serialization;
+using System.Net;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Xml;
 
 interface IArtifact
 {
@@ -28,53 +26,36 @@ file class Artifact(string file, string sha1, string url, int size) : IArtifact
     public int Size => size;
 }
 
-file struct SynchronizationContextRemover : INotifyCompletion
-{
-    internal readonly bool IsCompleted => SynchronizationContext.Current == null;
-
-    internal readonly SynchronizationContextRemover GetAwaiter() => this;
-
-    internal readonly void GetResult() { }
-
-    public readonly void OnCompleted(Action continuation)
-    {
-        var syncContext = SynchronizationContext.Current;
-        try
-        {
-            SynchronizationContext.SetSynchronizationContext(null);
-            continuation();
-        }
-        finally { SynchronizationContext.SetSynchronizationContext(syncContext); }
-    }
-}
-
 static class Dungeons
 {
-    static readonly HttpClient httpClient = new();
+    static readonly WebClient webClient = new();
 
-    static readonly JavaScriptSerializer javaScriptSerializer = new();
-
-    static async Task<dynamic> GetAsync(string requestUri)
+    static XmlDocument Deserialize(string address)
     {
-        using var response = await httpClient.GetAsync(requestUri);
-        response.EnsureSuccessStatusCode();
-        return javaScriptSerializer.Deserialize<dynamic>(await response.Content.ReadAsStringAsync());
+        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(Encoding.UTF8.GetBytes(webClient.DownloadString(address)), XmlDictionaryReaderQuotas.Max);
+        XmlDocument xml = new();
+        xml.Load(reader);
+        return xml;
     }
 
-    internal static async Task<ReadOnlyCollection<IArtifact>> GetAsync()
+    internal static ReadOnlyCollection<IArtifact> Get()
     {
-        await default(SynchronizationContextRemover);
-
         List<IArtifact> artifacts = [];
-        foreach (var file in (await GetAsync(
-            (await GetAsync("https://piston-meta.mojang.com/v1/products/dungeons/f4c685912beb55eb2d5c9e0713fe1195164bba27/windows-x64.json"))["dungeons"][0]["manifest"]["url"]))["files"])
+        foreach (XmlNode raw in Deserialize(Deserialize("https://piston-meta.mojang.com/v1/products/dungeons/f4c685912beb55eb2d5c9e0713fe1195164bba27/windows-x64.json")
+            .GetElementsByTagName("url")[0].InnerText)
+            .GetElementsByTagName("raw"))
         {
-            if (file.Value["type"].Equals("directory")) continue;
-            var raw = file.Value["downloads"]["raw"];
-            artifacts.Add(new Artifact(Path.Combine("Content", file.Key), raw["sha1"], raw["url"], raw["size"]));
-        }
-        artifacts.Sort((a, b) => ((Artifact)a).Size.CompareTo(((Artifact)b).Size));
+            var item = (XmlElement)raw.ParentNode.ParentNode;
+            var file = item.GetAttribute("item");
 
+            artifacts.Add(new Artifact(
+                Path.Combine("Content", string.IsNullOrEmpty(file) ? item.Name : file),
+                raw["sha1"].InnerText,
+                raw["url"].InnerText,
+                int.Parse(raw["size"].InnerText)));
+        }
+
+        artifacts.Sort((a, b) => ((Artifact)a).Size.CompareTo(((Artifact)b).Size));
         return artifacts.AsReadOnly();
     }
 }

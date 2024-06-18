@@ -54,7 +54,7 @@ class MainWindow : Window
 
     internal MainWindow()
     {
-        Dispatcher.UnhandledException += (sender, e) =>
+        Application.Current.Dispatcher.UnhandledException += (sender, e) =>
         {
             e.Handled = true;
             var exception = e.Exception;
@@ -144,9 +144,9 @@ class MainWindow : Window
             textBlock1.Text = "Downloading...";
         });
 
-        ContentRendered += async (sender, e) => await Task.Run(async () =>
+        ContentRendered += async (sender, e) => await Task.Run(() =>
         {
-            var artifacts = await Dungeons.GetAsync();
+            var artifacts = Dungeons.Get();
             IList<IArtifact> files = [];
 
             if (artifacts.Count != 0)
@@ -185,7 +185,7 @@ class MainWindow : Window
                 {
                     Dispatcher.Invoke(() => textBlock2.Text = $"{i + 1} of {files.Count}");
                     Directory.CreateDirectory(Path.GetDirectoryName(files[i].File));
-                    await webClient.DownloadFileTaskAsync(files[i].Url, files[i].File);
+                    webClient.DownloadFileTaskAsync(files[i].Url, files[i].File).Wait();
                 }
             }
 
