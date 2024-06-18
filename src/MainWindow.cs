@@ -119,7 +119,6 @@ class MainWindow : Window
 
         TextBlock textBlock2 = new()
         {
-            Text = string.Empty,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new(0, 0, 16, 1),
