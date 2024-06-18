@@ -140,9 +140,9 @@ class MainWindow : Window
 
         webClient.DownloadFileCompleted += (sender, e) => Dispatcher.Invoke(() =>
         {
-            textBlock1.Text = "Downloading...";
-            textBlock2.Text = value = null;
+            value = null;
             progressBar.Value = 0;
+            textBlock1.Text = "Downloading...";
         });
 
         ContentRendered += async (sender, e) => await Task.Run(async () =>
