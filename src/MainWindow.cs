@@ -19,9 +19,9 @@ file static class Resources
 {
     static readonly Assembly assembly = Assembly.GetExecutingAssembly();
 
-    internal static string Dungeons => ToString("Dungeons.svg");
+    internal static readonly string Dungeons = ToString("Dungeons.svg");
 
-    internal static ImageSource Icon => ToImageSource(".ico");
+    internal static readonly ImageSource Icon = ToImageSource(".ico");
 
     static ImageSource ToImageSource(string name)
     {
@@ -144,7 +144,7 @@ class MainWindow : Window
             textBlock1.Text = "Downloading...";
         });
 
-        ContentRendered += async (sender, e) => await Task.Run(() =>
+        ContentRendered += (sender, e) => Task.Run(() =>
         {
             var artifacts = Dungeons.Get();
             IList<IArtifact> files = [];
