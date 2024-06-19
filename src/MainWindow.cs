@@ -54,7 +54,7 @@ class MainWindow : Window
 
     internal MainWindow()
     {
-        Application.Current.Dispatcher.UnhandledException += (sender, e) =>
+        Application.Current.DispatcherUnhandledException += (sender, e) =>
         {
             e.Handled = true;
             var exception = e.Exception;
@@ -144,7 +144,7 @@ class MainWindow : Window
             textBlock1.Text = "Downloading...";
         });
 
-        ContentRendered += (sender, e) => Task.Run(() =>
+        ContentRendered += async (sender, e) => await Task.Run(() =>
         {
             var artifacts = Dungeons.Get();
             IList<IArtifact> files = [];
