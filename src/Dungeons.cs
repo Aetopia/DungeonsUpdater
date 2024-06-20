@@ -50,11 +50,11 @@ file struct SynchronizationContextRemover : INotifyCompletion
 
 static class Dungeons
 {
-     static readonly WebClient WebClient = new();
+    static readonly WebClient client = new();
 
     static async Task<XmlDocument> DeserializeAsync(string address)
     {
-        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(Encoding.UTF8.GetBytes(await WebClient.DownloadStringTaskAsync(address)), XmlDictionaryReaderQuotas.Max);
+        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(Encoding.UTF8.GetBytes(await client.DownloadStringTaskAsync(address)), XmlDictionaryReaderQuotas.Max);
         XmlDocument xml = new();
         xml.Load(reader);
         return xml;

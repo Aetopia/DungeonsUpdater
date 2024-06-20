@@ -128,10 +128,10 @@ class MainWindow : Window
         Grid.SetRow(textBlock2, 0);
         grid.Children.Add(textBlock2);
 
-        using WebClient webClient = new();
+        using WebClient client = new();
         string value = default;
 
-        webClient.DownloadProgressChanged += (sender, e) =>
+        client.DownloadProgressChanged += (sender, e) =>
         {
             if (progressBar.Value != e.ProgressPercentage)
             {
@@ -140,12 +140,12 @@ class MainWindow : Window
             }
         };
 
-        webClient.DownloadFileCompleted += (sender, e) =>
-        {
-            value = null;
-            progressBar.Value = 0;
-            textBlock1.Text = "Downloading...";
-        };
+        client.DownloadFileCompleted += (sender, e) =>
+            {
+                value = null;
+                progressBar.Value = 0;
+                textBlock1.Text = "Downloading...";
+            };
 
         ContentRendered += async (sender, e) =>
         {
@@ -182,7 +182,7 @@ class MainWindow : Window
                 {
                     textBlock2.Text = $"{i + 1} of {files.Count}";
                     Directory.CreateDirectory(Path.GetDirectoryName(files[i].File));
-                    await webClient.DownloadFileTaskAsync(files[i].Url, files[i].File);
+                    await client.DownloadFileTaskAsync(files[i].Url, files[i].File);
                 }
             }
 
