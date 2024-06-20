@@ -77,7 +77,7 @@ class MainWindow : Window
             Child = new System.Windows.Forms.WebBrowser()
             {
                 ScrollBarsEnabled = false,
-                DocumentText = $@"<head><meta http-equiv=""X-UA-Compatible"" content=""IE=9""/></head><body style=""background-color: #1E1E1E""><div style=""width: 85%; height: 100%; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%)"">{(global::Resources.Dungeons)}</div></body>"
+                DocumentText = $@"<head><meta http-equiv=""X-UA-Compatible"" content=""IE=9""/></head><body style=""background-color: #1E1E1E""><div style=""width:85%;height:100%;position:absolute;left:50%;top:50%;transform: translate(-50%, -50%)"">{(global::Resources.Dungeons)}</div></body>"
             },
             IsEnabled = false
         };
@@ -131,66 +131,63 @@ class MainWindow : Window
         using WebClient webClient = new();
         string value = default;
 
-        webClient.DownloadProgressChanged += (sender, e) => Dispatcher.Invoke(() =>
+        webClient.DownloadProgressChanged += (sender, e) =>
         {
-            textBlock1.Text = $"Downloading {Format(e.BytesReceived)} / {value ??= Format(e.TotalBytesToReceive)}";
-            progressBar.Value = e.ProgressPercentage;
-        });
+            if (progressBar.Value != e.ProgressPercentage)
+            {
+                textBlock1.Text = $"Downloading {Format(e.BytesReceived)} / {value ??= Format(e.TotalBytesToReceive)}";
+                progressBar.Value = e.ProgressPercentage;
+            }
+        };
 
-        webClient.DownloadFileCompleted += (sender, e) => Dispatcher.Invoke(() =>
+        webClient.DownloadFileCompleted += (sender, e) =>
         {
             value = null;
             progressBar.Value = 0;
             textBlock1.Text = "Downloading...";
-        });
+        };
 
-        ContentRendered += async (sender, e) => await Task.Run(() =>
+        ContentRendered += async (sender, e) =>
         {
-            var artifacts = Dungeons.Get();
+            var artifacts = await Dungeons.GetAsync();
             IList<IArtifact> files = [];
 
             if (artifacts.Count != 0)
             {
-                Dispatcher.Invoke(() =>
-                {
-                    textBlock1.Text = "Verifying...";
-                    progressBar.IsIndeterminate = false;
-                    progressBar.Maximum = artifacts.Count;
-                });
+                textBlock1.Text = "Verifying...";
+                progressBar.IsIndeterminate = false;
+                progressBar.Maximum = artifacts.Count;
 
-                using SHA1 sha1 = SHA1.Create();
-                for (int i = 0; i < artifacts.Count; i++)
+                await Task.Run(() =>
                 {
-                    Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = i + 1} of {artifacts.Count}");
-                    if (File.Exists(artifacts[i].File))
+                    using SHA1 sha1 = SHA1.Create();
+                    for (int i = 0; i < artifacts.Count; i++)
                     {
-                        using var inputStream = File.OpenRead(artifacts[i].File);
-                        if (artifacts[i].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
-                            continue;
+                        Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = i + 1} of {artifacts.Count}");
+                        if (File.Exists(artifacts[i].File))
+                            using (var inputStream = File.OpenRead(artifacts[i].File))
+                                if (artifacts[i].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
+                                    continue;
+                        files.Add(artifacts[i]);
                     }
-                    files.Add(artifacts[i]);
-                }
+                });
             }
-
             if (files.Count != 0)
             {
-                Dispatcher.Invoke(() =>
-                {
-                    progressBar.Value = 0;
-                    progressBar.Maximum = 100;
-                    textBlock1.Text = "Downloading...";
-                });
+                progressBar.Value = 0;
+                progressBar.Maximum = 100;
+                textBlock1.Text = "Downloading...";
 
                 for (int i = 0; i < files.Count; i++)
                 {
-                    Dispatcher.Invoke(() => textBlock2.Text = $"{i + 1} of {files.Count}");
+                    textBlock2.Text = $"{i + 1} of {files.Count}";
                     Directory.CreateDirectory(Path.GetDirectoryName(files[i].File));
-                    webClient.DownloadFileTaskAsync(files[i].Url, files[i].File).Wait();
+                    await webClient.DownloadFileTaskAsync(files[i].Url, files[i].File);
                 }
             }
 
             Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
-            Dispatcher.Invoke(Close);
-        });
+            Close();
+        };
     }
 }
