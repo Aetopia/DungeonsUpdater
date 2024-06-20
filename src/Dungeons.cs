@@ -79,7 +79,7 @@ static class Dungeons
                 int.Parse(raw["size"].InnerText)));
         }
 
-        artifacts.Sort((a, b) => ((Artifact)a).Size.CompareTo(((Artifact)b).Size));
+        artifacts.Sort((x, y) => ((Artifact)x).Size.CompareTo(((Artifact)y).Size));
         return artifacts.AsReadOnly();
     }
 }
