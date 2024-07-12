@@ -24,50 +24,42 @@ class MainWindow : Window
     {
         int value = 0;
         while (bytes >= 1024f) { bytes /= 1024f; value++; }
-        return string.Format($"{bytes:0.00} {(Units)value}");
+        return $"{bytes:0.00} {(Units)value}";
     }
 
     internal MainWindow()
     {
-        Dispatcher.UnhandledException += (sender, e) =>
-        {
-            e.Handled = true;
-            var exception = e.Exception;
-            while (exception.InnerException != null) exception = exception.InnerException;
-            ShellMessageBox(hWnd: new WindowInteropHelper(this).Handle, lpcText: exception.Message);
-            Close();
-        };
-
         UseLayoutRounding = true;
-        Icon = global::Resources.Icon;
+        Icon = global::Resources.GetImageSource(".ico");
         Title = "Dungeons Updater";
         Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
-        Content = new Grid { Width = 1000, Height = 600 };
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         ResizeMode = ResizeMode.NoResize;
         SizeToContent = SizeToContent.WidthAndHeight;
-        Closed += (sender, e) => Environment.Exit(0);
+
+        Grid grid1 = new (){ Width = 1000, Height = 600 };
+        Content = grid1;
 
         WindowsFormsHost host = new()
         {
             Child = new System.Windows.Forms.WebBrowser
             {
                 ScrollBarsEnabled = false,
-                DocumentText = $@"<!DOCTYPE html><html><head><meta http-equiv=""X-UA-Compatible"" content=""IE=edge""></head><body style=""background-color:#1E1E1E""><div style=""width:85%;height:100%;position:absolute;left:50%;top:50%;transform:translate(-50%, -50%)"">{(global::Resources.Logo)}</div></body></html>"
+                DocumentText = global::Resources.GetString("Document.html.gz")
             },
             IsEnabled = false
         };
 
         Grid.SetRow(host, 0);
-        ((Grid)Content).RowDefinitions.Add(new());
-        ((Grid)Content).Children.Add(host);
+        grid1.RowDefinitions.Add(new());
+        grid1.Children.Add(host);
 
-        Grid grid = new() { Margin = new(10, 0, 10, 10) };
-        grid.RowDefinitions.Add(new());
+        Grid grid2 = new() { Margin = new(10, 0, 10, 10) };
+        grid2.RowDefinitions.Add(new());
 
-        Grid.SetRow(grid, 1);
-        ((Grid)Content).RowDefinitions.Add(new() { Height = GridLength.Auto });
-        ((Grid)Content).Children.Add(grid);
+        Grid.SetRow(grid2, 1);
+        grid1.RowDefinitions.Add(new() { Height = GridLength.Auto });
+        grid1.Children.Add(grid2);
 
         ProgressBar progressBar = new()
         {
@@ -79,7 +71,7 @@ class MainWindow : Window
         };
 
         Grid.SetRow(progressBar, 0);
-        grid.Children.Add(progressBar);
+        grid2.Children.Add(progressBar);
 
         TextBlock textBlock1 = new()
         {
@@ -91,7 +83,7 @@ class MainWindow : Window
         };
 
         Grid.SetRow(textBlock1, 0);
-        grid.Children.Add(textBlock1);
+        grid2.Children.Add(textBlock1);
 
         TextBlock textBlock2 = new()
         {
@@ -102,8 +94,7 @@ class MainWindow : Window
         };
 
         Grid.SetRow(textBlock2, 0);
-        grid.Children.Add(textBlock2);
-
+        grid2.Children.Add(textBlock2);
 
         using WebClient client = new();
         string value = default;
@@ -127,6 +118,22 @@ class MainWindow : Window
                 textBlock1.Text = "Downloading...";
             });
         };
+
+        Dispatcher.UnhandledException += (sender, e) =>
+        {
+            progressBar.IsIndeterminate = false;
+            progressBar.Value = 100;
+            progressBar.Foreground = new SolidColorBrush(Color.FromRgb(133, 0, 0));
+            textBlock1.Text = "One or more errors occurred.";
+            textBlock2.Text = default;
+
+            e.Handled = true;
+            var exception = e.Exception;
+            while (exception.InnerException != null) exception = exception.InnerException;
+            ShellMessageBox(hWnd: new WindowInteropHelper(this).Handle, lpcText: exception.Message);
+            Close();
+        };
+
 
         ContentRendered += async (sender, e) => await Task.Run(() =>
         {
