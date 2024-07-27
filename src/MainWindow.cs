@@ -18,17 +18,25 @@ class MainWindow : Window
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     static extern int ShellMessageBox(IntPtr hAppInst = default, IntPtr hWnd = default, string lpcText = default, string lpcTitle = "Error", int fuStyle = 0x00000010);
 
-    enum Units { B, KB, MB, GB };
+    enum Unit { B, KB, MB, GB }
 
-    static string Format(float bytes)
+    static string Format(float value)
     {
-        int value = 0;
-        while (bytes >= 1024f) { bytes /= 1024f; value++; }
-        return $"{bytes:0.00} {(Units)value}";
+        var unit = (int)Math.Log(value, 1024);
+        return $"{value / Math.Pow(1024, unit):0.00} {(Unit)unit}";
     }
 
     internal MainWindow()
     {
+        Dispatcher.UnhandledException += (sender, e) =>
+        {
+            e.Handled = true;
+            var exception = e.Exception;
+            while (exception.InnerException != null) exception = exception.InnerException;
+            ShellMessageBox(hWnd: new WindowInteropHelper(this).Handle, lpcText: exception.Message);
+            Close();
+        };
+
         UseLayoutRounding = true;
         Icon = global::Resources.GetImageSource(".ico");
         Title = "Dungeons Updater";
@@ -37,7 +45,7 @@ class MainWindow : Window
         ResizeMode = ResizeMode.NoResize;
         SizeToContent = SizeToContent.WidthAndHeight;
 
-        Grid grid1 = new (){ Width = 1000, Height = 600 };
+        Grid grid1 = new() { Width = 1000, Height = 600 };
         Content = grid1;
 
         WindowsFormsHost host = new()
@@ -119,49 +127,30 @@ class MainWindow : Window
             });
         };
 
-        Dispatcher.UnhandledException += (sender, e) =>
-        {
-            progressBar.IsIndeterminate = false;
-            progressBar.Value = 100;
-            progressBar.Foreground = new SolidColorBrush(Color.FromRgb(133, 0, 0));
-            textBlock1.Text = "One or more errors occurred.";
-            textBlock2.Text = default;
-
-            e.Handled = true;
-            var exception = e.Exception;
-            while (exception.InnerException != null) exception = exception.InnerException;
-            ShellMessageBox(hWnd: new WindowInteropHelper(this).Handle, lpcText: exception.Message);
-            Close();
-        };
-
-
         ContentRendered += async (sender, e) => await Task.Run(() =>
         {
-            var artifacts = Dungeons.GetAsync();
-            IList<IArtifact> files = [];
+            var array = Dungeons.Get();
+            IList<Artifact> list = [];
 
-            if (artifacts.Count != 0)
+            Dispatcher.Invoke(() =>
             {
-                Dispatcher.Invoke(() =>
-                {
-                    textBlock1.Text = "Verifying...";
-                    progressBar.IsIndeterminate = false;
-                    progressBar.Maximum = artifacts.Count;
-                });
+                textBlock1.Text = "Verifying...";
+                progressBar.IsIndeterminate = false;
+                progressBar.Maximum = array.Length;
+            });
 
-                using SHA1 sha1 = SHA1.Create();
-                for (int i = 0; i < artifacts.Count; i++)
-                {
-                    Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = i + 1} of {artifacts.Count}");
-                    if (File.Exists(artifacts[i].File))
-                        using (var inputStream = File.OpenRead(artifacts[i].File))
-                            if (artifacts[i].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
-                                continue;
-                    files.Add(artifacts[i]);
-                }
+            using SHA1 sha1 = SHA1.Create();
+            for (int index = 0; index < array.Length; index++)
+            {
+                Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = index + 1} of {array.Length}");
+                if (File.Exists(array[index].File))
+                    using (var inputStream = File.OpenRead(array[index].File))
+                        if (array[index].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
+                            continue;
+                list.Add(array[index]);
             }
 
-            if (files.Count != 0)
+            if (list.Count != 0)
             {
                 Dispatcher.Invoke(() =>
                 {
@@ -170,15 +159,15 @@ class MainWindow : Window
                     textBlock1.Text = "Downloading...";
                 });
 
-                for (int i = 0; i < files.Count; i++)
+                for (int index = 0; index < list.Count; index++)
                 {
-                    Dispatcher.Invoke(() => textBlock2.Text = $"{i + 1} of {files.Count}");
-                    Directory.CreateDirectory(Path.GetDirectoryName(files[i].File));
-                    client.DownloadFileTaskAsync(files[i].Url, files[i].File).Wait();
+                    Dispatcher.Invoke(() => textBlock2.Text = $"{index + 1} / {list.Count}");
+                    Directory.CreateDirectory(Path.GetDirectoryName(list[index].File));
+                    client.DownloadFileTaskAsync(list[index].Url, list[index].File).Wait();
                 }
             }
 
-            Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
+         //   Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
             Dispatcher.Invoke(Close);
         });
     }

@@ -5,25 +5,17 @@ using System.Text;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Runtime.Serialization.Json;
+using System;
 
-interface IArtifact
+struct Artifact
 {
-    string File { get; }
+    internal string File;
 
-    string SHA1 { get; }
+    internal string SHA1;
 
-    string Url { get; }
-}
+    internal string Url;
 
-file class Artifact(string file, string sha1, string url, int size) : IArtifact
-{
-    public string File => file;
-
-    public string SHA1 => sha1;
-
-    public string Url => url;
-
-    public int Size => size;
+    internal int Size;
 }
 
 static class Dungeons
@@ -32,31 +24,36 @@ static class Dungeons
 
     static XmlDocument Deserialize(string address)
     {
-        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(Encoding.UTF8.GetBytes(client.DownloadString(address)), XmlDictionaryReaderQuotas.Max);
-        XmlDocument xml = new();
-        xml.Load(reader);
-        return xml;
+        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(client.DownloadData(address), XmlDictionaryReaderQuotas.Max);
+        XmlDocument document = new();
+        document.Load(reader);
+        return document;
     }
 
-    internal static ReadOnlyCollection<IArtifact> GetAsync()
+    internal static Artifact[] Get()
     {
-        List<IArtifact> artifacts = [];
+        var nodes = Deserialize(
+            Deserialize("https://piston-meta.mojang.com/v1/products/dungeons/f4c685912beb55eb2d5c9e0713fe1195164bba27/windows-x64.json")
+            .GetElementsByTagName("url")[0].InnerText)
+        .GetElementsByTagName("raw");
+        Artifact[] array = new Artifact[nodes.Count];
 
-        foreach (XmlNode raw in Deserialize(Deserialize("https://piston-meta.mojang.com/v1/products/dungeons/f4c685912beb55eb2d5c9e0713fe1195164bba27/windows-x64.json")
-        .GetElementsByTagName("url")[0].InnerText)
-        .GetElementsByTagName("raw"))
+        for (int i = 0; i < nodes.Count; i++)
         {
-            var item = (XmlElement)raw.ParentNode.ParentNode;
-            var file = item.GetAttribute("item");
+            var node = nodes[i];
+            var item = (XmlElement)node.ParentNode.ParentNode;
+            var value = item.GetAttribute("item");
 
-            artifacts.Add(new Artifact(
-                Path.Combine("Content", string.IsNullOrEmpty(file) ? item.Name : file),
-                raw["sha1"].InnerText,
-                raw["url"].InnerText,
-                int.Parse(raw["size"].InnerText)));
+            array[i] = new()
+            {
+                File = Path.Combine("Content", string.IsNullOrEmpty(value) ? item.Name : value),
+                SHA1 = node["sha1"].InnerText,
+                Url = node["url"].InnerText,
+                Size = int.Parse(node["size"].InnerText)
+            };
         }
-
-        artifacts.Sort((x, y) => ((Artifact)x).Size.CompareTo(((Artifact)y).Size));
-        return artifacts.AsReadOnly();
+        
+        Array.Sort(array, (x, y) => x.Size.CompareTo(y.Size));
+        return array;
     }
 }
