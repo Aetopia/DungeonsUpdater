@@ -14,8 +14,7 @@ using System.Windows.Forms.Integration;
 
 class MainWindow : Window
 {
-    [DllImport("Shell32", CharSet = CharSet.Auto, SetLastError = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport("Shell32", CharSet = CharSet.Auto, SetLastError = true), DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     static extern int ShellMessageBox(IntPtr hAppInst = default, IntPtr hWnd = default, string lpcText = default, string lpcTitle = "Error", int fuStyle = 0x00000010);
 
     enum Unit { B, KB, MB, GB }
