@@ -140,7 +140,7 @@ class MainWindow : Window
             using SHA1 sha1 = SHA1.Create();
             for (int index = 0; index < array.Length; index++)
             {
-                Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = index + 1} of {array.Length}");
+                Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = index + 1} / {array.Length}");
                 if (File.Exists(array[index].File))
                     using (var inputStream = File.OpenRead(array[index].File))
                         if (array[index].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
