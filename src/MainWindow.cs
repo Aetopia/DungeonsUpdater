@@ -129,8 +129,6 @@ class MainWindow : Window
         ContentRendered += async (sender, e) => await Task.Run(() =>
         {
             var array = Dungeons.Get();
-            IList<Artifact> list = [];
-
             Dispatcher.Invoke(() =>
             {
                 progressBar.IsIndeterminate = false;
@@ -138,6 +136,7 @@ class MainWindow : Window
             });
 
             using SHA1 sha1 = SHA1.Create();
+            IList<Artifact> list = [];
             for (int index = 0; index < array.Length; index++)
             {
                 Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = index + 1} / {array.Length}");
