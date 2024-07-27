@@ -82,7 +82,7 @@ class MainWindow : Window
 
         TextBlock textBlock1 = new()
         {
-            Text = "Connecting...",
+            Text = "Preparing...",
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Left,
             Margin = new(16, 0, 0, 1),
@@ -133,7 +133,6 @@ class MainWindow : Window
 
             Dispatcher.Invoke(() =>
             {
-                textBlock1.Text = "Verifying...";
                 progressBar.IsIndeterminate = false;
                 progressBar.Maximum = array.Length;
             });
