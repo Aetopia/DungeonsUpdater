@@ -167,7 +167,7 @@ class MainWindow : Window
                 }
             }
 
-         //   Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
+            Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
             Dispatcher.Invoke(Close);
         });
     }
