@@ -146,7 +146,7 @@ class MainWindow : Window
 
                 for (int index = 0; index < _.Count; index++)
                 {
-                    textBlock2.Text = index != 1 ? $"{index + 1} / {_.Count}":null;
+                    textBlock2.Text = _.Count != 1 ? $"{index + 1} / {_.Count}" : null;
                     if (_[index].Path.Length != 0) Directory.CreateDirectory(_[index].Path);
                     await client.DownloadFileTaskAsync(_[index].Url, _[index].File);
                 }
