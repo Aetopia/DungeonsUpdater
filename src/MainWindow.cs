@@ -19,12 +19,6 @@ class MainWindow : Window
 
     enum Unit { B, KB, MB, GB }
 
-    static string Format(float value)
-    {
-        var unit = (int)Math.Log(value, 1024);
-        return $"{value / Math.Pow(1024, unit):0.00} {(Unit)unit}";
-    }
-
     internal MainWindow()
     {
         Dispatcher.UnhandledException += (sender, e) =>
@@ -106,66 +100,60 @@ class MainWindow : Window
         using WebClient client = new();
         string value = default;
 
-        client.DownloadProgressChanged += (sender, e) =>
+        client.DownloadProgressChanged += (sender, e) => Dispatcher.Invoke(() =>
         {
-            var text = $"Downloading {Format(e.BytesReceived)} / {value ??= Format(e.TotalBytesToReceive)}";
-            Dispatcher.Invoke(() =>
+            static string _(float _) { var unit = (int)Math.Log(_, 1024); return $"{_ / Math.Pow(1024, unit):0.00} {(Unit)unit}"; }
+            if (progressBar.Value != e.ProgressPercentage)
             {
-                textBlock1.Text = text;
-                if (progressBar.Value != e.ProgressPercentage) progressBar.Value = e.ProgressPercentage;
-            });
-        };
+                textBlock1.Text = $"Downloading {_(e.BytesReceived)} / {value ??= _(e.TotalBytesToReceive)}";
+                progressBar.Value = e.ProgressPercentage;
+            }
+        });
 
-        client.DownloadFileCompleted += (sender, e) =>
+        client.DownloadFileCompleted += (sender, e) => Dispatcher.Invoke(() =>
         {
             value = null;
-            Dispatcher.Invoke(() =>
-            {
-                progressBar.Value = 0;
-                textBlock1.Text = "Downloading...";
-            });
-        };
+            progressBar.Value = 0;
+            textBlock1.Text = "Downloading...";
+        });
 
-        ContentRendered += async (sender, e) => await Task.Run(() =>
+        ContentRendered += async (sender, e) =>
         {
-            var array = Dungeons.Get();
-            Dispatcher.Invoke(() =>
-            {
-                progressBar.IsIndeterminate = false;
-                progressBar.Maximum = array.Length;
-            });
+            var list = await Dungeons.GetAsync();
+            progressBar.IsIndeterminate = false;
+            progressBar.Maximum = list.Count;
 
-            using SHA1 sha1 = SHA1.Create();
-            IList<Artifact> list = [];
-            for (int index = 0; index < array.Length; index++)
+            IList<Artifact> _ = [];
+            await Task.Run(() =>
             {
-                Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = index + 1} / {array.Length}");
-                if (File.Exists(array[index].File))
-                    using (var inputStream = File.OpenRead(array[index].File))
-                        if (array[index].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
-                            continue;
-                list.Add(array[index]);
-            }
-
-            if (list.Count != 0)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    progressBar.Value = 0;
-                    progressBar.Maximum = 100;
-                    textBlock1.Text = "Downloading...";
-                });
-
+                using SHA1 sha1 = SHA1.Create();
                 for (int index = 0; index < list.Count; index++)
                 {
-                    Dispatcher.Invoke(() => textBlock2.Text = $"{index + 1} / {list.Count}");
-                    Directory.CreateDirectory(Path.GetDirectoryName(list[index].File));
-                    client.DownloadFileTaskAsync(list[index].Url, list[index].File).Wait();
+                    Dispatcher.Invoke(() => textBlock2.Text = $"{progressBar.Value = index + 1} / {list.Count}");
+                    if (File.Exists(list[index].File))
+                        using (var inputStream = File.OpenRead(list[index].File))
+                            if (list[index].SHA1.Equals(BitConverter.ToString(sha1.ComputeHash(inputStream)).Replace("-", string.Empty), StringComparison.OrdinalIgnoreCase))
+                                continue;
+                    _.Add(list[index]);
+                }
+            });
+
+            if (_.Count != 0)
+            {
+                progressBar.Value = 0;
+                progressBar.Maximum = 100;
+                textBlock1.Text = "Downloading...";
+
+                for (int index = 0; index < _.Count; index++)
+                {
+                    textBlock2.Text = $"{index + 1} / {_.Count}";
+                    if (_[index].Path.Length != 0) Directory.CreateDirectory(_[index].Path);
+                    await client.DownloadFileTaskAsync(_[index].Url, _[index].File);
                 }
             }
 
-            Process.Start(new ProcessStartInfo { FileName = @"Content\Dungeons.exe", UseShellExecute = false }).Dispose();
-            Dispatcher.Invoke(Close);
-        });
+            Process.Start(new ProcessStartInfo { FileName = @"Dungeons.exe", UseShellExecute = false }).Dispose();
+            Close();
+        };
     }
 }

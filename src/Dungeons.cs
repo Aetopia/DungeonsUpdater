@@ -1,59 +1,48 @@
-using System.IO;
 using System.Net;
 using System.Xml;
-using System.Text;
+using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Runtime.Serialization.Json;
-using System;
 
-struct Artifact
-{
-    internal string File;
-
-    internal string SHA1;
-
-    internal string Url;
-
-    internal int Size;
-}
+class Artifact { internal string Path; internal string File; internal string SHA1; internal string Url; internal int Size; }
 
 static class Dungeons
 {
     static readonly WebClient client = new();
 
-    static XmlDocument Deserialize(string address)
+    static async Task<XmlElement> DeserializeAsync(string address)
     {
-        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(client.DownloadData(address), XmlDictionaryReaderQuotas.Max);
+        using XmlDictionaryReader reader = JsonReaderWriterFactory.CreateJsonReader(await client.DownloadDataTaskAsync(address), XmlDictionaryReaderQuotas.Max);
         XmlDocument document = new();
         document.Load(reader);
-        return document;
+        return document["root"];
     }
 
-    internal static Artifact[] Get()
+
+    internal static async Task<List<Artifact>> GetAsync()
     {
-        var nodes = Deserialize(
-            Deserialize("https://piston-meta.mojang.com/v1/products/dungeons/f4c685912beb55eb2d5c9e0713fe1195164bba27/windows-x64.json")
-            .GetElementsByTagName("url")[0].InnerText)
-        .GetElementsByTagName("raw");
-        Artifact[] array = new Artifact[nodes.Count];
+        List<Artifact> list = [];
+        string path = default;
 
-        for (int i = 0; i < nodes.Count; i++)
+        foreach (XmlNode node in (await DeserializeAsync(
+            (await DeserializeAsync("https://piston-meta.mojang.com/v1/products/dungeons/f4c685912beb55eb2d5c9e0713fe1195164bba27/windows-x64.json")).
+            GetElementsByTagName("url")[0].InnerText))["files"])
         {
-            var node = nodes[i];
-            var item = (XmlElement)node.ParentNode.ParentNode;
-            var value = item.GetAttribute("item");
+            if (node["type"].InnerText == "directory") { path = node.Attributes["item"].InnerText; continue; }
+            var item = node["downloads"]["raw"];
+            var value = node.Attributes["item"]?.InnerText;
 
-            array[i] = new()
+            list.Add(new()
             {
-                File = Path.Combine("Content", string.IsNullOrEmpty(value) ? item.Name : value),
-                SHA1 = node["sha1"].InnerText,
-                Url = node["url"].InnerText,
-                Size = int.Parse(node["size"].InnerText)
-            };
+                Path = path,
+                File = string.IsNullOrEmpty(value) ? node.Name : value,
+                SHA1 = item["sha1"].InnerText,
+                Url = item["url"].InnerText,
+                Size = int.Parse(item["size"].InnerText)
+            });
         }
-        
-        Array.Sort(array, (x, y) => x.Size.CompareTo(y.Size));
-        return array;
+
+        list.Sort((x, y) => x.Size.CompareTo(y.Size));
+        return list;
     }
 }
