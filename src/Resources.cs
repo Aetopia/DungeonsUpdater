@@ -13,12 +13,4 @@ static class Resources
         using var stream = assembly.GetManifestResourceStream(name);
         return BitmapFrame.Create(stream);
     }
-
-    internal static string GetString(string name)
-    {
-        using var _ = assembly.GetManifestResourceStream(name);
-        using GZipStream stream = new(_, CompressionMode.Decompress);
-        using StreamReader reader = new(stream);
-        return reader.ReadToEnd();
-    }
 }
