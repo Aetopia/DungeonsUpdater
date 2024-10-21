@@ -23,6 +23,8 @@ static class Client
 
     static readonly SHA1 algorithm = SHA1.Create();
 
+    static readonly int count = Environment.SystemPageSize;
+
     static XElement Parse(string address)
     {
         using var stream = client.GetStreamAsync(address).Result;
@@ -62,8 +64,8 @@ static class Client
         Parallel.ForEach(source, (_) =>
         {
             using var stream = client.GetStreamAsync(_.Url).Result; using var destination = File.OpenWrite(_.Path);
-            var count = 0; var buffer = new byte[Environment.SystemPageSize];
-            while ((count = stream.Read(buffer, 0, buffer.Length)) != 0)
+            var count = 0; var buffer = new byte[Client.count];
+            while ((count = stream.Read(buffer, 0, Client.count)) != 0)
             {
                 destination.Write(buffer, 0, count);
                 var progress = Math.Round((current += count) * 100 / total);
