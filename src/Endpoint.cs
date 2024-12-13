@@ -33,7 +33,6 @@ static class Endpoint
             else
             {
                 var @object = _.Descendants("raw").First();
-
                 items.Add(new()
                 {
                     Size = long.Parse(@object.Element("size").Value),
