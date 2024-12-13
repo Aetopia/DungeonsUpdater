@@ -7,11 +7,14 @@ Download, install & update Minecraft Dungeons.
 
 ## Features
 - Instantly update, download and install Minecraft Dungeons.
+
 - Decouples the game from the Minecraft Launcher & Xbox App.<br>This makes it possible to deploy the game under a Windows compatibility layer.
+
 - Portable, the game is placed alongside the updater.
 
 ## Prerequisites
 - A Microsoft account that owns Minecraft Dungeons.
+
 - Hardware & software that fulfill the [system requirements](https://help.minecraft.net/hc/en-us/articles/360038937032-Minecraft-Dungeons-Minimum-Specifications-for-Gameplay) for Minecraft Dungeons.
 
 ## Usage
@@ -30,18 +33,23 @@ Download, install & update Minecraft Dungeons.
 
 ## FAQ
 - Can I play Minecraft Dungeons offline?<br>
+
     - Dungeons Updater downloads the launcher version of Minecraft Dungeons.<br>You will need an active internet connection when launching the game.<br>After that the game can be played offline.
 
 - How can I repair Minecraft Dungeons?
+
     - Dungeons Updater automatically verifies & repairs the installation as needed.
+
     - This doesn't affect any installed modifications.
 
 - How can I skip the startup movies?
+
     - Open the following file:
 
         ```
         %LOCALAPPDATA%\Dungeons\Saved\Config\WindowsNoEditor\Game.ini
         ```
+
     - Add the following content and save:
 
         ```ini
@@ -68,7 +76,9 @@ Download, install & update Minecraft Dungeons.
 
 ## Building
 1. Download the following:
+
     - [.NET SDK](https://dotnet.microsoft.com/en-us/download)
+
     - [.NET Framework 4.8.1 Developer Pack](https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net481-developer-pack-offline-installer)
 
 2. Run the following command to compile:
