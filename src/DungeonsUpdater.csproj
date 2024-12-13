@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net481</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>latest</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Optimize>true</Optimize>
@@ -14,7 +13,7 @@
     <ApplicationManifest>Resources/.manifest</ApplicationManifest>
     <ApplicationIcon>Resources/.ico</ApplicationIcon>
 
-    <AssemblyVersion>1.1.7.0</AssemblyVersion>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <AssemblyTitle>Dungeons Updater</AssemblyTitle>
     <Product>Dungeons Updater</Product>
     <Copyright>Copyright (C) 2024</Copyright>
@@ -24,12 +23,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources/Document.html.gz">
-      <LogicalName>Document.html.gz</LogicalName>
-    </EmbeddedResource>
-
     <EmbeddedResource Include="Resources/.ico">
       <LogicalName>.ico</LogicalName>
     </EmbeddedResource>
+
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
 </Project>
